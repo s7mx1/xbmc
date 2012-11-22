@@ -52,6 +52,7 @@
   #include "osx/DarwinUtils.h"
 #endif
 #include "Util.h"
+#include <fstream>
 
 using namespace std;
 using namespace ADDON;
@@ -457,12 +458,21 @@ void CGUISettings::Initialize()
 
   map<int,int> audiomode;
   audiomode.insert(make_pair(338,AUDIO_ANALOG));
+
+  std::ifstream AEfile("/home/pi/.audioengine");
 #if !defined(TARGET_RASPBERRY_PI)
   audiomode.insert(make_pair(339,AUDIO_IEC958));
 #endif
-  audiomode.insert(make_pair(420,AUDIO_HDMI  ));
 #if defined(TARGET_RASPBERRY_PI)
-  AddInt(ao, "audiooutput.mode", 337, AUDIO_HDMI, audiomode, SPIN_CONTROL_TEXT);
+  if (AEfile.good())
+  {
+    audiomode.insert(make_pair(339,AUDIO_IEC958));
+    AddInt(ao, "audiooutput.mode", 337, AUDIO_ANALOG, audiomode, SPIN_CONTROL_TEXT);
+  }
+  else {
+    audiomode.insert(make_pair(420,AUDIO_HDMI  ));
+    AddInt(ao, "audiooutput.mode", 337, AUDIO_HDMI, audiomode, SPIN_CONTROL_TEXT);
+  }
 #else
   AddInt(ao, "audiooutput.mode", 337, AUDIO_ANALOG, audiomode, SPIN_CONTROL_TEXT);
 #endif
@@ -484,6 +494,7 @@ void CGUISettings::Initialize()
   AddBool(aocat, "audiooutput.dtspassthrough"   , 254, true);
 
 
+
 #if !defined(TARGET_DARWIN) && !defined(TARGET_RASPBERRY_PI)
   AddBool(aocat, "audiooutput.passthroughaac"   , 299, false);
 #endif
@@ -493,6 +504,25 @@ void CGUISettings::Initialize()
 #if !defined(TARGET_DARWIN) && !defined(TARGET_RASPBERRY_PI)
   AddBool(aocat, "audiooutput.truehdpassthrough", 349, true );
   AddBool(aocat, "audiooutput.dtshdpassthrough" , 347, true );
+#endif
+
+#if defined(TARGET_RASPBERRY_PI)
+  if (AEfile.good())
+  {
+    AddBool(aocat, "audiooutput.passthroughaac"   , 299, false);
+    AddBool(aocat, "audiooutput.multichannellpcm" , 348, true );
+    AddBool(aocat, "audiooutput.truehdpassthrough", 349, true );
+    AddBool(aocat, "audiooutput.dtshdpassthrough" , 347, true );
+    AddSeparator(ao, "audiooutput.sep1");
+    AddString   (ao, "audiooutput.audiodevice"      , 545, CStdString(CAEFactory::GetDefaultDevice(false)), SPIN_CONTROL_TEXT);
+    AddString   (ao, "audiooutput.passthroughdevice", 546, CStdString(CAEFactory::GetDefaultDevice(true )), SPIN_CONTROL_TEXT);
+    AddSeparator(ao, "audiooutput.sep2");
+    map<int,int> guimode;
+    guimode.insert(make_pair(34121, AE_SOUND_IDLE  ));
+    guimode.insert(make_pair(34122, AE_SOUND_ALWAYS));
+    guimode.insert(make_pair(34123, AE_SOUND_OFF   ));
+    AddInt(ao, "audiooutput.guisoundmode", 34120, AE_SOUND_IDLE, guimode, SPIN_CONTROL_TEXT);
+  }
 #endif
 
 #if !defined(TARGET_RASPBERRY_PI)

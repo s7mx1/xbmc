@@ -22,7 +22,7 @@
 #include "threads/Thread.h"
 
 #include "DVDAudio.h"
-#include "DVDClock.h"
+#include "OMXClock.h"
 #include "DVDMessageQueue.h"
 #include "DVDDemuxers/DVDDemuxUtils.h"
 #include "DVDStreamInfo.h"
@@ -78,10 +78,11 @@ public:
 class CDVDPlayerAudio : public CThread
 {
 public:
-  CDVDPlayerAudio(CDVDClock* pClock, CDVDMessageQueue& parent);
+  CDVDPlayerAudio(OMXClock* pClock, CDVDMessageQueue& parent);
   virtual ~CDVDPlayerAudio();
 
   bool OpenStream(CDVDStreamInfo &hints);
+  bool SetCurrentVolume(float fVolume);
   void OpenStream(CDVDStreamInfo &hints, CDVDAudioCodec* codec);
   void CloseStream(bool bWaitForBuffers);
 
@@ -119,6 +120,7 @@ public:
   double GetCurrentPts()                            { return m_dvdAudio.GetPlayingPts(); }
 
   bool IsStalled()                                  { return m_stalled;  }
+  bool IsEOS()                                      { return m_send_eos; };
   bool IsPassthrough() const;
 protected:
 
@@ -174,7 +176,7 @@ protected:
   } m_decode;
 
   CDVDAudio m_dvdAudio; // audio output device
-  CDVDClock* m_pClock; // dvd master clock
+  OMXClock* m_pClock; // dvd master clock
   CDVDAudioCodec* m_pAudioCodec; // audio codec
   BitstreamStats m_audioStats;
 
@@ -203,6 +205,7 @@ protected:
   int    m_errorcount;//number of errors stored
   bool   m_syncclock;
 
+  bool                      m_send_eos;
   double m_integral; //integral correction for resampler
   int    m_skipdupcount; //counter for skip/duplicate synctype
   bool   m_prevskipped;

@@ -29,9 +29,11 @@
 #endif
 #if defined(HAS_OMXPLAYER)
 #include "cores/omxplayer/OMXPlayer.h"
+#include "cores/omxaeplayer/OMXPlayer.h"
 #endif
 #include "cores/ExternalPlayer/ExternalPlayer.h"
 #include "utils/log.h"
+#include <fstream>
 
 class CPlayerCoreConfig
 {
@@ -73,18 +75,32 @@ public:
   IPlayer* CreatePlayer(IPlayerCallback& callback) const
   {
     IPlayer* pPlayer;
+    std::ifstream AEfile("/home/pi/.audioengine");
     switch(m_eCore)
     {
       case EPC_MPLAYER:
       // TODO: this hack needs removal until we have a better player selection
 #if defined(HAS_OMXPLAYER)
-      case EPC_DVDPLAYER: 
-        pPlayer = new COMXPlayer(callback); 
-        CLog::Log(LOGINFO, "Created player %s for core %d / OMXPlayer forced as DVDPlayer", "OMXPlayer", m_eCore);
+      case EPC_DVDPLAYER:
+        if (AEfile.good())
+        {
+          pPlayer = new COMXAEPlayer(callback);
+          CLog::Log(LOGINFO, "Created player %s for core %d / OMXAEPlayer forced as DVDPlayer", "OMXAEPlayer", m_eCore);
+        }
+        else {
+          pPlayer = new COMXPlayer(callback);
+          CLog::Log(LOGINFO, "Created player %s for core %d / OMXPlayer forced as DVDPlayer", "OMXPlayer", m_eCore);
+        }
         break;
-      case EPC_PAPLAYER: 
-        pPlayer = new COMXPlayer(callback); 
-        CLog::Log(LOGINFO, "Created player %s for core %d / OMXPlayer forced as PAPLayer", "OMXPlayer", m_eCore);
+      case EPC_PAPLAYER:
+        if (AEfile.good())
+        {
+          pPlayer = new PAPlayer(callback);
+        }
+        else {
+          pPlayer = new COMXPlayer(callback);
+          CLog::Log(LOGINFO, "Created player %s for core %d / OMXPlayer forced as PAPLayer", "OMXPlayer", m_eCore);
+        }
         break;
 #else
       case EPC_DVDPLAYER: pPlayer = new CDVDPlayer(callback); break;
@@ -95,7 +111,15 @@ public:
       case EPC_AMLPLAYER: pPlayer = new CAMLPlayer(callback); break;
 #endif
 #if defined(HAS_OMXPLAYER)
-      case EPC_OMXPLAYER: pPlayer = new COMXPlayer(callback); break;
+      case EPC_OMXPLAYER:
+      if (AEfile.good())
+      {
+        pPlayer = new COMXAEPlayer(callback);
+      }
+      else {
+        pPlayer = new COMXPlayer(callback);
+      }
+      break;
 #endif
       default: return NULL;
     }

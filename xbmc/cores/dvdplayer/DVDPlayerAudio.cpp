@@ -98,7 +98,7 @@ public:
 };
 
 
-CDVDPlayerAudio::CDVDPlayerAudio(CDVDClock* pClock, CDVDMessageQueue& parent)
+CDVDPlayerAudio::CDVDPlayerAudio(OMXClock* pClock, CDVDMessageQueue& parent)
 : CThread("CDVDPlayerAudio")
 , m_messageQueue("audio")
 , m_messageParent(parent)
@@ -164,6 +164,11 @@ bool CDVDPlayerAudio::OpenStream( CDVDStreamInfo &hints )
     CLog::Log(LOGNOTICE, "Creating audio thread");
     Create();
   }
+  return true;
+}
+
+bool CDVDPlayerAudio::SetCurrentVolume(float fVolume)
+{
   return true;
 }
 

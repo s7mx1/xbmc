@@ -18,9 +18,8 @@
  *
  */
 #include "system.h"
-
+#include <fstream>
 #include "AEFactory.h"
-
 #if defined(TARGET_DARWIN)
   #include "Engines/CoreAudio/CoreAudioAE.h"
 #else
@@ -42,10 +41,13 @@ IAE *CAEFactory::GetEngine()
 
 bool CAEFactory::LoadEngine()
 {
+  std::ifstream AEfile("/home/pi/.audioengine");
+  if (AEfile.fail())
+  {
 #if defined(TARGET_RASPBERRY_PI)
-  return true;
+      return true;
 #endif
-
+  }
   bool loaded = false;
 
   std::string engine;
@@ -124,10 +126,13 @@ void CAEFactory::UnLoadEngine()
 
 bool CAEFactory::StartEngine()
 {
+  std::ifstream AEfile("/home/pi/.audioengine");
+  if (AEfile.fail())
+  {
 #if defined(TARGET_RASPBERRY_PI)
-  return true;
+      return true;
 #endif
-
+  }
   if (!AE)
     return false;
 

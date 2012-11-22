@@ -159,7 +159,7 @@ DIRECTORY_ARCHIVES += xbmc/cores/amlplayer/amlplayer.a
 endif
 
 ifeq (@USE_OMXPLAYER@,1)
-DIRECTORY_ARCHIVES += xbmc/cores/omxplayer/omxplayer.a
+DIRECTORY_ARCHIVES += xbmc/cores/omxplayer/omxplayer.a xbmc/cores/omxaeplayer/omxplayer.a
 endif
 
 PAPCODECS_DIRS= \

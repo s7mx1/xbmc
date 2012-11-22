@@ -24,7 +24,7 @@
 #include "DVDMessageQueue.h"
 #include "DVDDemuxers/DVDDemuxUtils.h"
 #include "DVDCodecs/Video/DVDVideoCodec.h"
-#include "DVDClock.h"
+#include "OMXClock.h"
 #include "DVDOverlayContainer.h"
 #include "DVDTSCorrection.h"
 #ifdef HAS_VIDEO_PLAYBACK
@@ -40,7 +40,7 @@ class CDVDOverlayCodecCC;
 class CDVDPlayerVideo : public CThread
 {
 public:
-  CDVDPlayerVideo( CDVDClock* pClock
+  CDVDPlayerVideo( OMXClock* pClock
                  , CDVDOverlayContainer* pOverlayContainer
                  , CDVDMessageQueue& parent);
   virtual ~CDVDPlayerVideo();
@@ -100,7 +100,7 @@ public:
   // classes
   CDVDOverlayContainer* m_pOverlayContainer;
 
-  CDVDClock* m_pClock;
+  OMXClock* m_pClock;
 
 protected:
   virtual void OnStartup();

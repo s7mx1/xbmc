@@ -1,0 +1,8 @@
+CXXFLAGS += -D__STDC_FORMAT_MACROS
+
+SRCS=	OMXPlayer.cpp
+LIB=	omxplayer.a
+
+include @abs_top_srcdir@/Makefile.include
+-include $(patsubst %.cpp,%.P,$(patsubst %.c,%.P,$(SRCS)))
+

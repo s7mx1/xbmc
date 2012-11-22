@@ -119,7 +119,7 @@ public:
 };
 
 
-CDVDPlayerVideo::CDVDPlayerVideo( CDVDClock* pClock
+CDVDPlayerVideo::CDVDPlayerVideo( OMXClock* pClock
                                 , CDVDOverlayContainer* pOverlayContainer
                                 , CDVDMessageQueue& parent)
 : CThread("CDVDPlayerVideo")
