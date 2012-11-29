@@ -424,7 +424,7 @@ void CPulseAEStream::SetVolume(float volume)
 
   if (volume > 0.f)
   {
-    m_Volume = volume;
+    m_Volume = (double)(volume * 2.0f - 1.0f );
     pa_volume_t paVolume = pa_sw_volume_from_linear((double)(m_Volume * m_MaxVolume));
 
     pa_cvolume_set(&m_ChVolume, m_SampleSpec.channels, paVolume);
