@@ -79,13 +79,16 @@ bool CPulseAESound::Initialize()
       return false;
   }
 
-  m_maxVolume     = CAEFactory::GetEngine()->GetVolume();
+  m_maxVolume     = CAEFactory::GetVolume();
   m_volume        = 1.0f;
   pa_volume_t paVolume = pa_sw_volume_from_linear((double)(m_volume * m_maxVolume));
   pa_cvolume_set(&m_chVolume, m_sampleSpec.channels, paVolume);
 
   pa_threaded_mainloop_lock(m_mainLoop);
-  if ((m_stream = pa_stream_new(m_context, m_pulseName.c_str(), &m_sampleSpec, &map)) == NULL)
+  const char *m_sampleName;
+  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
+  CLog::Log(LOGERROR,"UUID :%s, File Path: %s, File Name: %s",m_pulseName.c_str(),m_filename.c_str(), m_sampleName);
+  if ((m_stream = pa_stream_new(m_context, m_sampleName , &m_sampleSpec, &map)) == NULL)
   {
     CLog::Log(LOGERROR, "CPulseAESound::Initialize - Could not create a stream");
     pa_threaded_mainloop_unlock(m_mainLoop);
@@ -121,7 +124,9 @@ bool CPulseAESound::Initialize()
 void CPulseAESound::DeInitialize()
 {
   pa_threaded_mainloop_lock(m_mainLoop);
-  pa_operation *op = pa_context_remove_sample(m_context, m_pulseName.c_str(), NULL, NULL);
+  const char *m_sampleName;
+  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
+  pa_operation *op = pa_context_remove_sample(m_context, m_sampleName, NULL, NULL);
   if (op)
     pa_operation_unref(op);
   pa_threaded_mainloop_unlock(m_mainLoop);
@@ -135,7 +140,11 @@ void CPulseAESound::Play()
   /* we only keep the most recent operation as it is the only one needed for IsPlaying to function */
   if (m_op)
     pa_operation_unref(m_op);
-  m_op = pa_context_play_sample(m_context, m_pulseName.c_str(), NULL, PA_VOLUME_INVALID, NULL, NULL);
+  const char *m_sampleName;
+  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
+  m_maxVolume     = CAEFactory::GetVolume();
+  pa_volume_t paVolume = pa_sw_volume_from_linear(m_maxVolume);
+  m_op = pa_context_play_sample(m_context, m_sampleName, NULL, paVolume, NULL, NULL);
   pa_threaded_mainloop_unlock(m_mainLoop);
 }
 
