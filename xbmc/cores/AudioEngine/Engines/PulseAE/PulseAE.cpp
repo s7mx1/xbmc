@@ -353,7 +353,7 @@ static void SinkInfo(pa_context *c, const pa_sink_info *i, int eol, void *userda
     {
       CStdString desc, sink;
       desc.Format("%s (PulseAudio)", i->description);
-      sink.Format("pulse:%s@default", i->name);
+      sink.Format("%s", i->name);
       sinkStruct->list->push_back(AEDevice(desc, sink));
       CLog::Log(LOGDEBUG, "PulseAudio: Found %s with devicestring %s", desc.c_str(), sink.c_str());
     }
@@ -375,7 +375,7 @@ void CPulseAE::EnumerateOutputDevices(AEDeviceList &devices, bool passthrough)
   sinkStruct.list = &devices;
   CStdString def;
   def.Format("%s (PulseAudio)",g_localizeStrings.Get(409).c_str());
-  devices.push_back(AEDevice(def, "pulse:default@default"));
+  devices.push_back(AEDevice(def, "default"));
   WaitForOperation(pa_context_get_sink_info_list(m_Context,
                    SinkInfo, &sinkStruct), m_MainLoop, "EnumerateAudioSinks");
 

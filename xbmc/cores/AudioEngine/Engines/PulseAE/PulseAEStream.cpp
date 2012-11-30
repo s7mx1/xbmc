@@ -27,6 +27,7 @@
 #include "utils/log.h"
 #include "utils/MathUtils.h"
 #include "threads/SingleLock.h"
+#include "settings/GUISettings.h"
 
 static const char *StreamStateToString(pa_stream_state s)
 {
@@ -65,6 +66,8 @@ CPulseAEStream::CPulseAEStream(pa_context *context, pa_threaded_mainloop *mainLo
 
   m_DrainOperation = NULL;
   m_slave = NULL;
+
+  std::string m_outputDevice;
 
   pa_threaded_mainloop_lock(m_MainLoop);
 
@@ -156,9 +159,18 @@ CPulseAEStream::CPulseAEStream(pa_context *context, pa_threaded_mainloop *mainLo
   pa_format_info_set_channel_map  (info[0], &map);
   pa_format_info_set_sample_format(info[0], m_SampleSpec.format);
   m_Stream = pa_stream_new_extended(m_Context, "audio stream", info, 1, NULL);
+  if (info[0]->encoding == PA_ENCODING_PCM)
+  {
+    m_outputDevice = g_guiSettings.GetString("audiooutput.audiodevice");
+  }
+  else
+  {
+    m_outputDevice = g_guiSettings.GetString("audiooutput.passthroughdevice");
+  }
   pa_format_info_free(info[0]);
 #else
   m_Stream = pa_stream_new(m_Context, "audio stream", &m_SampleSpec, &map);
+  m_outputDevice = g_guiSettings.GetString("audiooutput.passthroughdevice");
 #endif
 
   if (m_Stream == NULL)
@@ -183,12 +195,25 @@ CPulseAEStream::CPulseAEStream(pa_context *context, pa_threaded_mainloop *mainLo
   if (options && AESTREAM_FORCE_RESAMPLE)
     flags |= PA_STREAM_VARIABLE_RATE;
 
-  if (pa_stream_connect_playback(m_Stream, NULL, NULL, (pa_stream_flags)flags, &m_ChVolume, NULL) < 0)
+  if ( m_outputDevice == "default" )
   {
-    CLog::Log(LOGERROR, "PulseAudio: Failed to connect stream to output");
-    pa_threaded_mainloop_unlock(m_MainLoop);
-    Destroy();
-    return /*false*/;
+    if (pa_stream_connect_playback(m_Stream, NULL, NULL, (pa_stream_flags)flags, &m_ChVolume, NULL) < 0)
+    {
+      CLog::Log(LOGERROR, "PulseAudio: Failed to connect stream to output");
+      pa_threaded_mainloop_unlock(m_MainLoop);
+      Destroy();
+      return /*false*/;
+    }
+  }
+  else
+  {
+    if (pa_stream_connect_playback(m_Stream, m_outputDevice.c_str(), NULL, (pa_stream_flags)flags, &m_ChVolume, NULL) < 0)
+    {
+      CLog::Log(LOGERROR, "PulseAudio: Failed to connect stream to output");
+      pa_threaded_mainloop_unlock(m_MainLoop);
+      Destroy();
+      return /*false*/;
+    }
   }
 
   /* Wait until the stream is ready */
@@ -213,7 +238,10 @@ CPulseAEStream::CPulseAEStream(pa_context *context, pa_threaded_mainloop *mainLo
 
   m_Initialized = true;
 
+  CLog::Log(LOGNOTICE, "PulseAudio Audio Stream Sink Name: %s", m_outputDevice.c_str());
+
   CLog::Log(LOGINFO, "PulseAEStream::Initialized");
+  CLog::Log(LOGINFO, "  Sink          : %s", m_outputDevice.c_str());
   CLog::Log(LOGINFO, "  Sample Rate   : %d", m_sampleRate);
   CLog::Log(LOGINFO, "  Sample Format : %s", CAEUtil::DataFormatToStr(m_format));
   CLog::Log(LOGINFO, "  Channel Count : %d", m_channelLayout.Count());
