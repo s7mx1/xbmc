@@ -26,7 +26,6 @@
 #include "utils/log.h"
 #include "MathUtils.h"
 #include "StringUtils.h"
-#include "settings/GUISettings.h"
 
 CPulseAESound::CPulseAESound(const std::string &filename, pa_context *context, pa_threaded_mainloop *mainLoop) :
   IAESound         (filename),
@@ -80,15 +79,13 @@ bool CPulseAESound::Initialize()
       return false;
   }
 
-  m_maxVolume     = CAEFactory::GetVolume();
+  m_maxVolume     = CAEFactory::GetEngine()->GetVolume();
   m_volume        = 1.0f;
   pa_volume_t paVolume = pa_sw_volume_from_linear((double)(m_volume * m_maxVolume));
   pa_cvolume_set(&m_chVolume, m_sampleSpec.channels, paVolume);
 
   pa_threaded_mainloop_lock(m_mainLoop);
-  const char *m_sampleName;
-  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
-  if ((m_stream = pa_stream_new(m_context, m_sampleName , &m_sampleSpec, &map)) == NULL)
+  if ((m_stream = pa_stream_new(m_context, m_pulseName.c_str(), &m_sampleSpec, &map)) == NULL)
   {
     CLog::Log(LOGERROR, "CPulseAESound::Initialize - Could not create a stream");
     pa_threaded_mainloop_unlock(m_mainLoop);
@@ -124,9 +121,7 @@ bool CPulseAESound::Initialize()
 void CPulseAESound::DeInitialize()
 {
   pa_threaded_mainloop_lock(m_mainLoop);
-  const char *m_sampleName;
-  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
-  pa_operation *op = pa_context_remove_sample(m_context, m_sampleName, NULL, NULL);
+  pa_operation *op = pa_context_remove_sample(m_context, m_pulseName.c_str(), NULL, NULL);
   if (op)
     pa_operation_unref(op);
   pa_threaded_mainloop_unlock(m_mainLoop);
@@ -140,20 +135,7 @@ void CPulseAESound::Play()
   /* we only keep the most recent operation as it is the only one needed for IsPlaying to function */
   if (m_op)
     pa_operation_unref(m_op);
-  const char *m_sampleName;
-  m_sampleName = strrchr(m_filename.c_str(), '/') + 1;
-  m_maxVolume     = CAEFactory::GetVolume();
-  pa_volume_t paVolume = pa_sw_volume_from_linear(m_maxVolume);
-  std::string m_outputDevice = g_guiSettings.GetString("audiooutput.audiodevice");
-  CLog::Log(LOGNOTICE,"PulseAudio Menu Sound Playback Sink Name: %s", m_outputDevice.c_str());
-  if ( m_outputDevice == "default" )
-  {
-    m_op = pa_context_play_sample(m_context, m_sampleName, NULL, paVolume, NULL, NULL);
-  }
-  else
-  {
-    m_op = pa_context_play_sample(m_context, m_sampleName, m_outputDevice.c_str(), paVolume, NULL, NULL);
-  }
+  m_op = pa_context_play_sample(m_context, m_pulseName.c_str(), NULL, PA_VOLUME_INVALID, NULL, NULL);
   pa_threaded_mainloop_unlock(m_mainLoop);
 }
 
